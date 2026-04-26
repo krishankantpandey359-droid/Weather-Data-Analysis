@@ -23,13 +23,13 @@ This project analyzes weather data using Python to understand temperature trends
 ## 📸 Output
  
 ### 🌡️ Temperature Trend
-![Temperature](temperature_trend.png)
+![Temperature](Screenshot_20260426_171455_Gallery.jpg)
  
 ### 🌧️ Rainfall Analysis
-![Rainfall](rainfall_analysis.png)
+![Rainfall](Screenshot_20260426_171455_Gallery.jpg)
  
 ### 🌤️ Weather Distribution
-![Weather](weather_distribution.png)
+![Weather](Screenshot_20260426_171455_Gallery.jpg)
  
 ## 👩‍💻 Author
 Srishti Pandey
