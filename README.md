@@ -22,7 +22,7 @@ This project analyzes weather data using Python to understand temperature trends
 ![Rainfall](Screenshot_20260426_181406_Gallery.jpg)
  
 ### 🌤️ Weather Distribution
-![Weather](weather.png.pdf)
+![Weather](Screenshot_20260426_181450_Gallery.jpg)
  
 ## 👩‍💻 Author
 Srishti Pandey
