@@ -1,14 +1,29 @@
-# Weather Data Analysis & Visualization 🌦️
+# 🌦️ Weather Data Analysis & Visualization
  
-## Project Overview
-This project analyzes weather data using Python to understand temperature trends.
+## 📌 Project Overview
+This project analyzes weather data using Python to understand temperature trends, rainfall patterns, and weather distribution.
  
-## Tools Used
+## 🛠️ Tools Used
 - Python
 - Pandas
 - Matplotlib
  
-## Output
+## 📊 Key Insights
+- Temperature shows a rising trend over time
+- Rainfall varies across different dates
+- Weather conditions distribution analyzed (Sunny, Cloudy, Rainy)
  
-### Temperature Trend
-![Temperature](Screenshot_20260426_171455_Gallery.jpg)
+## 📸 Output
+ 
+### 🌡️ Temperature Trend
+![Temperature](temperature.png)
+ 
+### 🌧️ Rainfall Analysis
+![Rainfall](rainfall.png)
+ 
+### 🌤️ Weather Distribution
+![Weather](weather.png)
+ 
+## 👩‍💻 Author
+Srishti Pandey
+ 
