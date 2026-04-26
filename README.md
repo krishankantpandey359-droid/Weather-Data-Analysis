@@ -16,7 +16,7 @@ This project analyzes weather data using Python to understand temperature trends
 ## 📸 Output
  
 ### 🌡️ Temperature Trend
-![Temperature](temperature.png.pdf)
+![Temperature](Screenshot_20260426_181417_Gallery.jpg)
  
 ### 🌧️ Rainfall Analysis
 ![Rainfall](Screenshot_20260426_181406_Gallery.jpg)
