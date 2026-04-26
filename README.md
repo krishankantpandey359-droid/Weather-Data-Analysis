@@ -19,7 +19,7 @@ This project analyzes weather data using Python to understand temperature trends
 ![Temperature](temperature.png.pdf)
  
 ### 🌧️ Rainfall Analysis
-![Rainfall](rainfall.png.pdf)
+![Rainfall](Screenshot_20260426_181406_Gallery.jpg)
  
 ### 🌤️ Weather Distribution
 ![Weather](weather.png.pdf)
