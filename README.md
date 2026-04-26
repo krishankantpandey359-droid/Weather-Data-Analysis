@@ -10,19 +10,19 @@ This project analyzes weather data using Python to understand temperature trends
  
 ## 📊 Key Insights
 - Temperature shows a rising trend over time
-- Rainfall varies across different dates
-- Weather conditions distribution analyzed (Sunny, Cloudy, Rainy)
+- Rainfall patterns analyzed
+- Weather distribution visualized using pie chart
  
 ## 📸 Output
  
 ### 🌡️ Temperature Trend
-![Temperature](temperature.png)
+![Temperature](temperature.png.pdf)
  
 ### 🌧️ Rainfall Analysis
-![Rainfall](rainfall.png)
+![Rainfall](rainfall.png.pdf)
  
 ### 🌤️ Weather Distribution
-![Weather](weather.png)
+![Weather](weather.png.pdf)
  
 ## 👩‍💻 Author
 Srishti Pandey
