@@ -9,7 +9,7 @@ This project analyzes weather data using Python to understand temperature trends
 - Matplotlib
  
 ## 📊 Key Insights
-- Temperature shows a rising trend over time
+- Across the seven recorded dates (1–7 January 2024), temperature values range from 22°C to 28°C
 - Rainfall patterns analyzed
 - Weather distribution visualized using pie chart
  
