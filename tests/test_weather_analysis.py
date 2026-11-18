@@ -48,3 +48,42 @@ def test_missing_dataset_fails_with_clear_error(tmp_path):
     )
     assert result.returncode != 0
     assert "Weather dataset not found" in result.stderr
+
+
+def test_invalid_humidity_is_rejected(tmp_path):
+    frame = pd.read_csv(DATA)
+    frame.loc[0, "Humidity"] = 101
+    invalid = tmp_path / "invalid_humidity.csv"
+    frame.to_csv(invalid, index=False)
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--data", str(invalid), "--output-dir", str(tmp_path / "out")],
+        cwd=PROJECT, text=True, capture_output=True,
+    )
+    assert result.returncode != 0
+    assert "Humidity values must be between 0 and 100" in result.stderr
+
+
+def test_negative_rainfall_is_rejected(tmp_path):
+    frame = pd.read_csv(DATA)
+    frame.loc[0, "Rainfall"] = -1
+    invalid = tmp_path / "negative_rainfall.csv"
+    frame.to_csv(invalid, index=False)
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--data", str(invalid), "--output-dir", str(tmp_path / "out")],
+        cwd=PROJECT, text=True, capture_output=True,
+    )
+    assert result.returncode != 0
+    assert "Rainfall values cannot be negative" in result.stderr
+
+
+def test_duplicate_dates_are_rejected(tmp_path):
+    frame = pd.read_csv(DATA)
+    frame.loc[1, "Date"] = frame.loc[0, "Date"]
+    invalid = tmp_path / "duplicate_dates.csv"
+    frame.to_csv(invalid, index=False)
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--data", str(invalid), "--output-dir", str(tmp_path / "out")],
+        cwd=PROJECT, text=True, capture_output=True,
+    )
+    assert result.returncode != 0
+    assert "duplicate dates" in result.stderr
