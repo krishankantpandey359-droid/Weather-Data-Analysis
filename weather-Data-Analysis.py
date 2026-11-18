@@ -4,6 +4,7 @@ import argparse
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 REQUIRED_COLUMNS = {"Date", "Temperature", "Humidity", "Rainfall", "Weather"}
@@ -30,6 +31,17 @@ def run_analysis(data_path=None, output_dir=None, show=False):
         df[column] = pd.to_numeric(df[column], errors="coerce")
     if df[["Date", "Temperature", "Humidity", "Rainfall", "Weather"]].isna().any().any():
         raise ValueError("Weather dataset contains missing or invalid required values")
+    numeric = df[["Temperature", "Humidity", "Rainfall"]].to_numpy(dtype=float)
+    if not np.isfinite(numeric).all():
+        raise ValueError("Weather dataset contains infinite numeric values")
+    if not df["Humidity"].between(0, 100).all():
+        raise ValueError("Humidity values must be between 0 and 100 percent")
+    if (df["Rainfall"] < 0).any():
+        raise ValueError("Rainfall values cannot be negative")
+    if df["Weather"].astype(str).str.strip().eq("").any():
+        raise ValueError("Weather descriptions must not be blank")
+    if df["Date"].duplicated().any():
+        raise ValueError("Weather dataset contains duplicate dates")
 
     df = df.sort_values("Date")
     destination.mkdir(parents=True, exist_ok=True)
