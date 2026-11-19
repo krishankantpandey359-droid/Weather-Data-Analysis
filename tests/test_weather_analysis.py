@@ -87,3 +87,15 @@ def test_duplicate_dates_are_rejected(tmp_path):
     )
     assert result.returncode != 0
     assert "duplicate dates" in result.stderr
+
+
+def test_summary_reports_observed_date_coverage(tmp_path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("weather_analysis", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    summary = module.run_analysis(DATA, tmp_path)
+    assert summary["date_start"] == "2024-01-01"
+    assert summary["date_end"] == "2024-01-07"
+    assert summary["calendar_span_days"] == 7
+    assert summary["calendar_day_coverage_percent"] == 100.0
