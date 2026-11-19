@@ -97,8 +97,9 @@ def fetch_daily_weather(
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     if frame[OUTPUT_COLUMNS[1:]].isna().any().any():
         raise ValueError("Open-Meteo response contains missing or non-numeric values")
-    if not frame[OUTPUT_COLUMNS[1:]].map(lambda col: col.map(pd.notna)).all().all():
-        raise ValueError("Open-Meteo response contains invalid numeric values")
+    import numpy as np
+    if not np.isfinite(frame[OUTPUT_COLUMNS[1:]].to_numpy(dtype=float)).all():
+        raise ValueError("Open-Meteo response contains non-finite numeric values")
     if frame["Date"].duplicated().any():
         raise ValueError("Open-Meteo response contains duplicate dates")
 
