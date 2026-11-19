@@ -14,8 +14,8 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: python -m pip install --upgrade pip pandas matplotlib pytest
+        run: python -m pip install --upgrade pip pandas matplotlib pytest requests
       - name: Compile project and tests
-        run: python -m compileall -q weather-Data-Analysis.py tests
+        run: python -m compileall -q weather-Data-Analysis.py scripts tests
       - name: Run dataset and execution tests
         run: pytest -q
