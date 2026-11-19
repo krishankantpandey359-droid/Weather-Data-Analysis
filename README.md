@@ -1,54 +1,94 @@
-# Weather Data Analysis and Visualization
+# Weather Data Analysis and Historical Weather Analytics
 
-A Python project that validates a small daily weather dataset, summarizes observations, and generates charts plus a machine-readable JSON report.
+This repository contains two deliberately separate analysis paths:
 
-## Dataset
+1. The original seven-row `weather.csv` teaching example.
+2. A reproducible Open-Meteo ERA5 historical reanalysis download and analysis workflow.
 
-The committed `weather.csv` contains seven daily records from 1 to 7 January 2024. Its columns are Date, Temperature, Humidity, Rainfall and Weather.
+The two datasets are never silently merged. ERA5 values are gridded reanalysis estimates, not direct measurements from a local weather station.
 
-The sample has an average temperature of 25.0°C, average humidity of 66.86%, and total rainfall of 18 dataset units. These values describe only the supplied observations. The rainfall unit is not documented, so the project deliberately labels it as a dataset unit rather than assuming millimetres.
+## Path A: Original seven-row sample
 
-## Analysis and validation
-
-The script:
-1. Loads the CSV using a path relative to the script by default.
-2. Checks required columns, missing/invalid/non-finite values and unique calendar dates.
-3. Validates humidity to the 0–100% range and rejects negative rainfall.
-4. Normalizes weather category labels for consistent counts.
-5. Calculates temperature mean, median, minimum and maximum; humidity range; rainfall totals and daily average; rainy-day count/share; and weather-category counts.
-6. Reports calendar coverage and lists missing dates instead of silently treating an incomplete series as complete.
-7. Exports three charts and `weather_summary.json`.
-8. Records the input filename and SHA-256 fingerprint for reproducibility.
-
-## Run locally
+The committed `weather.csv` contains seven daily records from 1–7 January 2024. The existing script validates the sample and exports charts plus `weather_summary.json`.
 
 ```bash
-python -m pip install pandas matplotlib numpy pytest
+python -m pip install pandas matplotlib numpy pytest requests
 python weather-Data-Analysis.py
-pytest -q
 ```
 
-To choose a CSV and output folder:
+The sample reports an average temperature of 25.0°C, average humidity of 66.86%, and rainfall total of 18 dataset units. The rainfall unit, provider and location are undocumented. These figures describe only the seven supplied rows.
+
+## Path B: Historical ERA5 workflow
+
+### 1. Download data
+
+There is one supported downloader: `scripts/download_historical_weather.py`.
+
+Supply the coordinates and date range for the location you intend to study. Do not assume the example values represent a weather station.
 
 ```bash
-python weather-Data-Analysis.py --data weather.csv --output-dir outputs
+python scripts/download_historical_weather.py \
+  --latitude YOUR_LATITUDE \
+  --longitude YOUR_LONGITUDE \
+  --location-label "Your study location" \
+  --start-date 2021-01-01 \
+  --end-date 2025-12-31 \
+  --output data/external/era5_daily.csv
 ```
 
-Add `--show` to display charts interactively. The default uses a non-interactive Matplotlib backend for CI.
+The downloader writes:
+- `data/external/era5_daily.csv`
+- `data/external/era5_daily.metadata.json`
 
-## Outputs
+The metadata records requested and returned coordinates, elevation, dates, timezone, ERA5 model, units, API variables and attribution.
 
-- `temperature_trend.png`
-- `rainfall_analysis.png`
-- `weather_distribution.png`
-- `weather_summary.json`
+### 2. Analyze the downloaded data
 
-The JSON report includes null provenance fields when the repository does not document the rainfall unit, source provider, location or measurement method.
+```bash
+python scripts/analyze_historical_weather.py \
+  --data data/external/era5_daily.csv \
+  --output-dir outputs/historical
+```
 
-## Limitations
+The historical analysis validates the canonical schema, date uniqueness, finite numeric values, humidity range, non-negative precipitation and wind speed, and temperature min/mean/max ordering. It exports a JSON summary, monthly summary CSV, daily temperature chart, daily precipitation chart and monthly precipitation chart.
 
-The dataset contains only seven days from January 2024. The repository does not document a weather station, geographic location, source provider, rainfall unit or measurement methodology. Do not interpret this sample as representative of a city, region, season or long-term climate, and do not treat it as a forecast. A seven-row sample is suitable for demonstrating a reproducible analysis workflow, not for drawing weather or climate conclusions.
+### Historical CSV schema
 
-## Tools
+| Column | Unit |
+|---|---|
+| Date | Asia/Kolkata local calendar date |
+| Temperature_Mean_C | °C |
+| Temperature_Max_C | °C |
+| Temperature_Min_C | °C |
+| Humidity_Mean_Percent | % |
+| Precipitation_Sum_mm | mm |
+| Wind_Speed_Max_kmh | km/h |
 
-Python, pandas, NumPy, Matplotlib and pytest.
+## Source, attribution and limitations
+
+- Provider: Open-Meteo Historical Weather API.
+- API documentation: https://open-meteo.com/en/docs/historical-weather-api
+- Endpoint: https://archive-api.open-meteo.com/v1/archive
+- Model requested: ERA5.
+- Attribution: Weather data by Open-Meteo.com.
+- Open-Meteo historical data is published under CC BY 4.0; attribution is required. The free API service has non-commercial restrictions. Verify current terms before redistribution or commercial use.
+- ERA5 is a gridded reanalysis product. Returned grid coordinates can differ from requested coordinates. It is not a personal weather station measurement.
+- Report the location label, requested and returned coordinates, time period, units and missing-date coverage.
+- Avoid climate-trend conclusions from a short period or a single grid cell.
+
+## Tests and CI
+
+```bash
+python -m pytest -q
+```
+
+GitHub Actions compiles the analysis and scripts and runs both the original sample tests and mocked historical downloader/analysis tests. Tests do not make live API requests.
+
+## Repository structure
+
+- `weather.csv`: preserved seven-row teaching sample.
+- `weather-Data-Analysis.py`: analysis of the original sample.
+- `scripts/download_historical_weather.py`: sole supported historical downloader.
+- `scripts/analyze_historical_weather.py`: historical CSV validation and analysis.
+- `tests/`: automated tests for both paths.
+- `docs/`: historical data workflow and source notes.
