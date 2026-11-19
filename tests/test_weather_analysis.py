@@ -133,3 +133,23 @@ def test_analysis_exports_machine_readable_summary(tmp_path):
     assert saved == summary
     assert saved["records"] == 7
     assert saved["calendar_day_coverage_percent"] == 100.0
+
+
+def test_summary_records_dataset_fingerprint_and_unknown_provenance(tmp_path):
+    import hashlib
+    import importlib.util
+    import json
+
+    spec = importlib.util.spec_from_file_location("weather_analysis", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    summary = module.run_analysis(DATA, tmp_path)
+
+    assert summary["dataset_file"] == DATA.name
+    assert summary["dataset_sha256"] == hashlib.sha256(DATA.read_bytes()).hexdigest()
+    assert summary["source_provider"] is None
+    assert summary["location"] is None
+    assert summary["measurement_method"] is None
+    assert summary["provenance_status"] == "not_documented_in_repository"
+    saved = json.loads((tmp_path / "weather_summary.json").read_text(encoding="utf-8"))
+    assert saved == summary
