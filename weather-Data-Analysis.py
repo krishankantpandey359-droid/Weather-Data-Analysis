@@ -41,7 +41,8 @@ def run_analysis(data_path=None, output_dir=None, show=False):
         raise ValueError("Humidity values must be between 0 and 100 percent")
     if (df["Rainfall"] < 0).any():
         raise ValueError("Rainfall values cannot be negative")
-    if df["Weather"].astype(str).str.strip().eq("").any():
+    df["Weather"] = df["Weather"].astype(str).str.strip().str.title()
+    if df["Weather"].eq("").any():
         raise ValueError("Weather descriptions must not be blank")
     if df["Date"].dt.normalize().duplicated().any():
         raise ValueError("Weather dataset contains duplicate calendar dates")
@@ -51,26 +52,32 @@ def run_analysis(data_path=None, output_dir=None, show=False):
     date_range = pd.date_range(df["Date"].min().normalize(), df["Date"].max().normalize(), freq="D")
     observed_dates = pd.DatetimeIndex(df["Date"].dt.normalize().unique())
     missing_dates = date_range.difference(observed_dates)
+    rainy_days = int(df["Rainfall"].gt(0).sum())
+    weather_days = {
+        str(key): int(value)
+        for key, value in df["Weather"].value_counts().sort_index().items()
+    }
 
     summary = {
+        "records": int(len(df)),
+        "date_start": df["Date"].min().date().isoformat(),
+        "date_end": df["Date"].max().date().isoformat(),
         "average_temperature_c": round(float(df["Temperature"].mean()), 2),
+        "median_temperature_c": round(float(df["Temperature"].median()), 2),
         "minimum_temperature_c": round(float(df["Temperature"].min()), 2),
         "maximum_temperature_c": round(float(df["Temperature"].max()), 2),
         "average_humidity_percent": round(float(df["Humidity"].mean()), 2),
         "minimum_humidity_percent": round(float(df["Humidity"].min()), 2),
         "maximum_humidity_percent": round(float(df["Humidity"].max()), 2),
         "total_rainfall_dataset_units": round(float(df["Rainfall"].sum()), 2),
-        "average_rainfall_dataset_units": round(float(df["Rainfall"].mean()), 2),
-        "records": int(len(df)),
-        "date_start": df["Date"].min().date().isoformat(),
-        "date_end": df["Date"].max().date().isoformat(),
+        "average_daily_rainfall_dataset_units": round(float(df["Rainfall"].mean()), 2),
+        "rainy_days": rainy_days,
+        "rainy_day_share_percent": round(rainy_days / len(df) * 100, 2),
+        "weather_category_counts": weather_days,
         "calendar_span_days": int(len(date_range)),
         "observed_calendar_days": int(len(observed_dates)),
         "missing_calendar_days": [day.date().isoformat() for day in missing_dates],
         "calendar_day_coverage_percent": round(len(observed_dates) / len(date_range) * 100, 2),
-        "weather_category_counts": {
-            str(key): int(value) for key, value in df["Weather"].value_counts().sort_index().items()
-        },
         "dataset_file": csv_path.name,
         "dataset_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
         "temperature_unit": "degrees Celsius, as labelled in the source column",
@@ -92,9 +99,16 @@ def run_analysis(data_path=None, output_dir=None, show=False):
 
     print("WEATHER DATA SUMMARY")
     print("-" * 30)
+    print(f"Date Range: {summary['date_start']} to {summary['date_end']}")
+    print(f"Records: {summary['records']}")
     print(f"Average Temperature (°C): {summary['average_temperature_c']}")
+    print(f"Median Temperature (°C): {summary['median_temperature_c']}")
+    print(f"Temperature Range (°C): {summary['minimum_temperature_c']} to {summary['maximum_temperature_c']}")
     print(f"Average Humidity (%): {summary['average_humidity_percent']}")
     print(f"Total Rainfall (dataset units): {summary['total_rainfall_dataset_units']}")
+    print(f"Average Daily Rainfall (dataset units): {summary['average_daily_rainfall_dataset_units']}")
+    print(f"Rainy Days: {summary['rainy_days']} ({summary['rainy_day_share_percent']}%)")
+    print(f"Weather Categories: {summary['weather_category_counts']}")
     print(f"Calendar coverage: {summary['calendar_day_coverage_percent']}%")
 
     fig, ax = plt.subplots(figsize=(8, 5))
