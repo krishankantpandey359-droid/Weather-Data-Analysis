@@ -87,3 +87,23 @@ def test_duplicate_dates_are_rejected(tmp_path):
     )
     assert result.returncode != 0
     assert "duplicate dates" in result.stderr
+
+
+def test_summary_exposes_date_range_distribution_and_rainy_days(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("weather_analysis", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    summary = module.run_analysis(DATA, tmp_path)
+    assert summary["records"] == 7
+    assert summary["start_date"] == "2024-01-01"
+    assert summary["end_date"] == "2024-01-07"
+    assert summary["median_temperature"] == 25.0
+    assert summary["min_temperature"] == 22.0
+    assert summary["max_temperature"] == 28.0
+    assert summary["average_daily_rainfall"] == round(18 / 7, 2)
+    assert summary["rainy_days"] == 4
+    assert summary["rainy_day_share_pct"] == round(4 / 7 * 100, 2)
+    assert summary["weather_days"] == {"Cloudy": 2, "Rainy": 3, "Sunny": 2}
