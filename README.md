@@ -1,6 +1,6 @@
 # Weather Data Analysis and Visualization
 
-A Python project that summarizes a small daily weather dataset and generates charts plus a machine-readable JSON report.
+A Python project that validates a small daily weather dataset, summarizes observations, and generates charts plus a machine-readable JSON report.
 
 ## Dataset
 
@@ -14,10 +14,11 @@ The script:
 1. Loads the CSV using a path relative to the script by default.
 2. Checks required columns, missing/invalid/non-finite values and unique calendar dates.
 3. Validates humidity to the 0–100% range and rejects negative rainfall.
-4. Calculates temperature and humidity ranges, rainfall summaries, weather-category counts and date coverage.
-5. Lists missing calendar dates instead of silently treating an incomplete series as complete.
-6. Exports three charts and `weather_summary.json`.
-7. Records the input filename and SHA-256 fingerprint for reproducibility.
+4. Normalizes weather category labels for consistent counts.
+5. Calculates temperature mean, median, minimum and maximum; humidity range; rainfall totals and daily average; rainy-day count/share; and weather-category counts.
+6. Reports calendar coverage and lists missing dates instead of silently treating an incomplete series as complete.
+7. Exports three charts and `weather_summary.json`.
+8. Records the input filename and SHA-256 fingerprint for reproducibility.
 
 ## Run locally
 
@@ -42,9 +43,11 @@ Add `--show` to display charts interactively. The default uses a non-interactive
 - `weather_distribution.png`
 - `weather_summary.json`
 
+The JSON report includes null provenance fields when the repository does not document the rainfall unit, source provider, location or measurement method.
+
 ## Limitations
 
-The dataset contains only seven days from January 2024. The repository does not document a weather station, geographic location, source provider, rainfall unit or measurement methodology. The exported summary records unknown provenance as null. Do not interpret this sample as representative of a city, region, season or long-term climate, and do not treat it as a forecast.
+The dataset contains only seven days from January 2024. The repository does not document a weather station, geographic location, source provider, rainfall unit or measurement methodology. Do not interpret this sample as representative of a city, region, season or long-term climate, and do not treat it as a forecast. A seven-row sample is suitable for demonstrating a reproducible analysis workflow, not for drawing weather or climate conclusions.
 
 ## Tools
 
