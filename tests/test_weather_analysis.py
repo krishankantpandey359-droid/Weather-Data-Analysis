@@ -99,3 +99,17 @@ def test_summary_reports_observed_date_coverage(tmp_path):
     assert summary["date_end"] == "2024-01-07"
     assert summary["calendar_span_days"] == 7
     assert summary["calendar_day_coverage_percent"] == 100.0
+
+
+def test_duplicate_calendar_dates_with_different_times_are_rejected(tmp_path):
+    frame = pd.read_csv(DATA)
+    frame.loc[1, "Date"] = "2024-01-01 12:00:00"
+    invalid = tmp_path / "duplicate_calendar_dates.csv"
+    frame.to_csv(invalid, index=False)
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--data", str(invalid),
+         "--output-dir", str(tmp_path / "out")],
+        cwd=PROJECT, text=True, capture_output=True,
+    )
+    assert result.returncode != 0
+    assert "duplicate calendar dates" in result.stderr
