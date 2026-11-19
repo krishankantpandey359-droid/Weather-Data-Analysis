@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+import csv
 import hashlib
 import json
 
@@ -20,6 +21,19 @@ def run_analysis(data_path=None, output_dir=None, show=False):
 
     if not csv_path.is_file():
         raise FileNotFoundError(f"Weather dataset not found: {csv_path}")
+
+    # pandas silently renames duplicate CSV headers (for example, Date.1).
+    # Inspect the raw header first so ambiguous source schemas fail explicitly.
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as source_file:
+        try:
+            raw_header = next(csv.reader(source_file))
+        except StopIteration as exc:
+            raise ValueError("Weather dataset is empty") from exc
+    if not raw_header or any(not str(name).strip() for name in raw_header):
+        raise ValueError("Weather dataset contains blank column names")
+    if len(raw_header) != len(set(raw_header)):
+        duplicates = sorted({name for name in raw_header if raw_header.count(name) > 1})
+        raise ValueError(f"Weather dataset contains duplicate column names: {duplicates}")
 
     df = pd.read_csv(csv_path)
     missing = REQUIRED_COLUMNS.difference(df.columns)

@@ -12,7 +12,7 @@ The sample has an average temperature of 25.0°C, average humidity of 66.86%, an
 
 The script:
 1. Loads the CSV using a path relative to the script by default.
-2. Checks required columns, missing/invalid/non-finite values and unique calendar dates.
+2. Checks raw CSV headers for duplicate or blank names before pandas can silently rename them, then validates required columns, missing/invalid/non-finite values and unique calendar dates.
 3. Validates humidity to the 0–100% range and rejects negative rainfall.
 4. Normalizes weather category labels for consistent counts.
 5. Calculates temperature mean, median, minimum and maximum; humidity range; rainfall totals and daily average; rainy-day count/share; and weather-category counts.
