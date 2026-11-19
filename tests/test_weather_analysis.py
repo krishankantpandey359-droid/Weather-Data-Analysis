@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -10,15 +11,6 @@ SCRIPT = PROJECT / "weather-Data-Analysis.py"
 DATA = PROJECT / "weather.csv"
 
 
-def test_dataset_schema_and_summary_values():
-    df = pd.read_csv(DATA)
-    assert {"Date", "Temperature", "Humidity", "Rainfall", "Weather"} <= set(df.columns)
-    assert len(df) == 7
-    assert round(df["Temperature"].mean(), 2) == 25.0
-    assert round(df["Humidity"].mean(), 2) == 66.86
-    assert df["Rainfall"].sum() == 18
-
-
 def run_script(data, output):
     env = os.environ.copy()
     env["MPLBACKEND"] = "Agg"
@@ -28,21 +20,42 @@ def run_script(data, output):
     )
 
 
-def test_full_analysis_exports_charts_and_expanded_summary(tmp_path):
-    import json
+def test_dataset_schema_and_summary_values():
+    df = pd.read_csv(DATA)
+    assert {"Date", "Temperature", "Humidity", "Rainfall", "Weather"} <= set(df.columns)
+    assert len(df) == 7
+    assert round(df["Temperature"].mean(), 2) == 25.0
+    assert round(df["Humidity"].mean(), 2) == 66.86
+    assert df["Rainfall"].sum() == 18
+
+
+def test_full_analysis_exports_charts_and_summary_metrics(tmp_path):
     result = run_script(DATA, tmp_path)
     assert result.returncode == 0, result.stderr
     assert "Average Temperature (°C): 25.0" in result.stdout
     assert "Average Humidity (%): 66.86" in result.stdout
+    assert "Rainy Days: 4 (57.14%)" in result.stdout
     for name in ("temperature_trend.png", "rainfall_analysis.png", "weather_distribution.png"):
         output = tmp_path / name
         assert output.is_file() and output.stat().st_size > 0
     summary = json.loads((tmp_path / "weather_summary.json").read_text(encoding="utf-8"))
     assert summary["records"] == 7
+    assert summary["date_start"] == "2024-01-01"
+    assert summary["date_end"] == "2024-01-07"
+    assert summary["average_temperature_c"] == 25.0
+    assert summary["median_temperature_c"] == 25.0
+    assert summary["minimum_temperature_c"] == 22.0
+    assert summary["maximum_temperature_c"] == 28.0
+    assert summary["average_humidity_percent"] == 66.86
+    assert summary["total_rainfall_dataset_units"] == 18.0
+    assert summary["average_daily_rainfall_dataset_units"] == round(18 / 7, 2)
+    assert summary["rainy_days"] == 4
+    assert summary["rainy_day_share_percent"] == round(4 / 7 * 100, 2)
+    assert summary["weather_category_counts"] == {"Cloudy": 2, "Rainy": 3, "Sunny": 2}
     assert summary["calendar_day_coverage_percent"] == 100.0
     assert summary["missing_calendar_days"] == []
     assert summary["rainfall_unit"] is None
-    assert summary["minimum_temperature_c"] <= summary["average_temperature_c"] <= summary["maximum_temperature_c"]
+    assert summary["dataset_sha256"]
 
 
 def test_missing_dataset_fails_with_clear_error(tmp_path):
@@ -82,7 +95,6 @@ def test_duplicate_dates_are_rejected(tmp_path):
 
 
 def test_calendar_coverage_detects_missing_days(tmp_path):
-    import json
     frame = pd.read_csv(DATA).drop(index=3)
     incomplete = tmp_path / "incomplete.csv"
     frame.to_csv(incomplete, index=False)
@@ -105,3 +117,24 @@ def test_duplicate_calendar_dates_with_different_times_are_rejected(tmp_path):
     result = run_script(invalid, tmp_path / "out")
     assert result.returncode != 0
     assert "duplicate calendar dates" in result.stderr
+
+
+def test_weather_category_whitespace_and_case_are_normalized(tmp_path):
+    frame = pd.read_csv(DATA)
+    frame.loc[0, "Weather"] = " sunny "
+    modified = tmp_path / "category_variation.csv"
+    frame.to_csv(modified, index=False)
+    result = run_script(modified, tmp_path / "out")
+    assert result.returncode == 0, result.stderr
+    summary = json.loads((tmp_path / "out" / "weather_summary.json").read_text(encoding="utf-8"))
+    assert summary["weather_category_counts"] == {"Cloudy": 2, "Rainy": 3, "Sunny": 2}
+
+
+def test_weather_category_blank_values_are_rejected(tmp_path):
+    frame = pd.read_csv(DATA)
+    frame.loc[0, "Weather"] = "   "
+    invalid = tmp_path / "blank_weather.csv"
+    frame.to_csv(invalid, index=False)
+    result = run_script(invalid, tmp_path / "out")
+    assert result.returncode != 0
+    assert "Weather descriptions must not be blank" in result.stderr
