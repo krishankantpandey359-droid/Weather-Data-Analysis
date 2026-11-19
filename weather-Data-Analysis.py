@@ -61,7 +61,7 @@ def run_analysis(data_path=None, output_dir=None, show=False):
     }
     with (destination / "weather_summary.json").open("w", encoding="utf-8") as summary_file:
         json.dump(summary, summary_file, indent=2, ensure_ascii=False)
-        summary_file.write("\\n")
+        summary_file.write("\n")
 
     print("WEATHER DATA SUMMARY")
     print("-" * 30)
