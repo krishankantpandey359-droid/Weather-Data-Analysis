@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+import json
 
 import matplotlib
 matplotlib.use("Agg")
@@ -58,6 +59,10 @@ def run_analysis(data_path=None, output_dir=None, show=False):
             len(df) / ((df["Date"].max() - df["Date"].min()).days + 1) * 100, 2
         ),
     }
+    with (destination / "weather_summary.json").open("w", encoding="utf-8") as summary_file:
+        json.dump(summary, summary_file, indent=2, ensure_ascii=False)
+        summary_file.write("\\n")
+
     print("WEATHER DATA SUMMARY")
     print("-" * 30)
     print(f"Average Temperature: {summary['average_temperature']}")
