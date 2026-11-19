@@ -17,14 +17,14 @@ Outputs:
 - `data/processed/basti_weather_2021_2025.csv`
 - `data/processed/basti_weather_2021_2025.metadata.json`
 
-The CSV contains daily mean, maximum and minimum temperature (°C), mean relative humidity (%), precipitation and rain sum (mm), and maximum 10 m wind speed (km/h). The JSON records source, requested and returned coordinates, timezone, units, dates, variables, and attribution.
+The CSV contains daily mean, maximum and minimum temperature (°C), daily mean relative humidity (%), precipitation and rain sum (mm), and maximum 10 m wind speed (km/h). The JSON records source, requested and returned coordinates, timezone, units, dates, variables, and attribution.
 
 ## Source and model limitations
 
 - Provider: Open-Meteo Historical Weather API.
 - API documentation: https://open-meteo.com/en/docs/historical-weather-api
 - Endpoint: https://archive-api.open-meteo.com/v1/archive
-- The API uses reanalysis products such as ERA5 and ERA5-Land. These are gridded, model-based historical estimates, not guaranteed observations from a weather station at the requested point.
+- The downloader explicitly requests the ERA5 model. These are gridded, model-based historical estimates, not guaranteed observations from a weather station at the requested point.
 - Open-Meteo describes historical coverage from 1940 onward, with different models and spatial resolutions by period.
 - Daily precipitation sum is measured in millimetres when requested with `precipitation_unit=mm`.
 - Timezone is set to Asia/Kolkata for daily aggregation.
