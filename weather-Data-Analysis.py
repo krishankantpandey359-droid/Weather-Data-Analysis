@@ -43,20 +43,38 @@ def run_analysis(data_path=None, output_dir=None, show=False):
     if df["Date"].duplicated().any():
         raise ValueError("Weather dataset contains duplicate dates")
 
+    df["Weather"] = df["Weather"].astype(str).str.strip().str.title()
     df = df.sort_values("Date")
     destination.mkdir(parents=True, exist_ok=True)
 
+    rainy_days = int(df["Rainfall"].gt(0).sum())
     summary = {
+        "records": int(len(df)),
+        "start_date": df["Date"].min().date().isoformat(),
+        "end_date": df["Date"].max().date().isoformat(),
         "average_temperature": round(float(df["Temperature"].mean()), 2),
+        "median_temperature": round(float(df["Temperature"].median()), 2),
+        "min_temperature": float(df["Temperature"].min()),
+        "max_temperature": float(df["Temperature"].max()),
         "average_humidity": round(float(df["Humidity"].mean()), 2),
         "total_rainfall": float(df["Rainfall"].sum()),
-        "records": int(len(df)),
+        "average_daily_rainfall": round(float(df["Rainfall"].mean()), 2),
+        "rainy_days": rainy_days,
+        "rainy_day_share_pct": round(rainy_days / len(df) * 100, 2),
+        "weather_days": df["Weather"].value_counts().sort_index().to_dict(),
     }
     print("WEATHER DATA SUMMARY")
     print("-" * 30)
+    print(f"Date Range: {summary['start_date']} to {summary['end_date']}")
+    print(f"Records: {summary['records']}")
     print(f"Average Temperature: {summary['average_temperature']}")
+    print(f"Median Temperature: {summary['median_temperature']}")
+    print(f"Temperature Range: {summary['min_temperature']} to {summary['max_temperature']}")
     print(f"Average Humidity: {summary['average_humidity']}")
     print(f"Total Rainfall: {summary['total_rainfall']}")
+    print(f"Average Daily Rainfall: {summary['average_daily_rainfall']}")
+    print(f"Rainy Days: {summary['rainy_days']} ({summary['rainy_day_share_pct']}%)")
+    print(f"Weather Days: {summary['weather_days']}")
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(df["Date"], df["Temperature"], marker="o", linewidth=2)
