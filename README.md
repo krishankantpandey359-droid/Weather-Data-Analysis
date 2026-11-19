@@ -58,3 +58,8 @@ The dataset contains only seven days from January 2024. The repository does not 
 ## Tools
 
 Python, pandas, NumPy, Matplotlib and pytest.
+
+
+## Dataset provenance status
+
+The repository does not identify the provider, station, geographic location or measurement method for the seven-row sample. The exported `weather_summary.json` therefore records these provenance fields as unknown instead of inferring a location or source. It also includes the input filename and SHA-256 fingerprint so the exact analyzed CSV can be identified.
