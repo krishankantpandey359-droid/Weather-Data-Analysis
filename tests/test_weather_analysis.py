@@ -86,7 +86,7 @@ def test_duplicate_dates_are_rejected(tmp_path):
         cwd=PROJECT, text=True, capture_output=True,
     )
     assert result.returncode != 0
-    assert "duplicate dates" in result.stderr
+    assert "duplicate calendar dates" in result.stderr
 
 
 def test_summary_reports_observed_date_coverage(tmp_path):
