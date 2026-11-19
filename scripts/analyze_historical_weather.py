@@ -8,6 +8,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 REQUIRED_COLUMNS = {
@@ -28,12 +29,13 @@ def analyze_historical_weather(data_path: str | Path, output_dir: str | Path):
         raise ValueError(f"Historical weather CSV is missing columns: {sorted(missing)}")
     if frame.empty:
         raise ValueError("Historical weather CSV is empty")
+
     frame["Date"] = pd.to_datetime(frame["Date"], errors="coerce")
     for column in NUMERIC_COLUMNS:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     if frame[list(REQUIRED_COLUMNS)].isna().any().any():
         raise ValueError("Historical weather CSV contains missing or invalid values")
-    if not frame[NUMERIC_COLUMNS].map(lambda col: col.map(lambda value: pd.notna(value) and abs(value) != float("inf"))).all().all():
+    if not np.isfinite(frame[NUMERIC_COLUMNS].to_numpy(dtype=float)).all():
         raise ValueError("Historical weather CSV contains non-finite numeric values")
     if frame["Date"].duplicated().any():
         raise ValueError("Historical weather CSV contains duplicate dates")
@@ -44,15 +46,16 @@ def analyze_historical_weather(data_path: str | Path, output_dir: str | Path):
     if (frame["Wind_Speed_Max_kmh"] < 0).any():
         raise ValueError("Wind speed cannot be negative")
     if (
-        frame["Temperature_Min_C"] > frame["Temperature_Mean_C"]
-    ).any() or (
-        frame["Temperature_Mean_C"] > frame["Temperature_Max_C"]
-    ).any():
+        (frame["Temperature_Min_C"] > frame["Temperature_Mean_C"]).any()
+        or (frame["Temperature_Mean_C"] > frame["Temperature_Max_C"]).any()
+    ):
         raise ValueError("Temperature minimum, mean and maximum values are inconsistent")
 
     frame = frame.sort_values("Date").reset_index(drop=True)
     output_dir.mkdir(parents=True, exist_ok=True)
-    monthly = frame.assign(Month=frame["Date"].dt.to_period("M").astype(str)).groupby("Month").agg(
+    monthly = frame.assign(
+        Month=frame["Date"].dt.to_period("M").astype(str)
+    ).groupby("Month").agg(
         mean_temperature_c=("Temperature_Mean_C", "mean"),
         max_temperature_c=("Temperature_Max_C", "mean"),
         min_temperature_c=("Temperature_Min_C", "mean"),
