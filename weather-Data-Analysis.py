@@ -40,8 +40,8 @@ def run_analysis(data_path=None, output_dir=None, show=False):
         raise ValueError("Rainfall values cannot be negative")
     if df["Weather"].astype(str).str.strip().eq("").any():
         raise ValueError("Weather descriptions must not be blank")
-    if df["Date"].duplicated().any():
-        raise ValueError("Weather dataset contains duplicate dates")
+    if df["Date"].dt.normalize().duplicated().any():
+        raise ValueError("Weather dataset contains duplicate calendar dates")
 
     df = df.sort_values("Date")
     destination.mkdir(parents=True, exist_ok=True)
