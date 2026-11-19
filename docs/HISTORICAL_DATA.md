@@ -1,36 +1,66 @@
-# Historical weather dataset acquisition
+# Historical weather data workflow
 
-The repository's original seven-row `weather.csv` is preserved as the small teaching example. It is not silently replaced.
+This document describes the single supported historical data workflow in this repository.
 
-## Reproducible historical dataset
+## Source
 
-Use the downloader to fetch daily historical reanalysis data for a documented location and period:
+- Provider: Open-Meteo Historical Weather API.
+- Documentation: https://open-meteo.com/en/docs/historical-weather-api
+- Endpoint: https://archive-api.open-meteo.com/v1/archive
+- Requested model: ERA5.
+- Attribution: Weather data by Open-Meteo.com.
+- License: CC BY 4.0 attribution is required. The free API service is for non-commercial use; check current terms before commercial use or redistribution.
+
+ERA5 values are gridded reanalysis estimates, not direct observations from a local weather station.
+
+## Download
+
+Use only `scripts/download_historical_weather.py`. The script requires explicit coordinates, a location label and dates. It does not guess a location.
 
 ```bash
 python -m pip install pandas requests
-python scripts/download_historical_weather.py --latitude 26.78817 --longitude 82.71617 --start 2021-01-01 --end 2025-12-31
+python scripts/download_historical_weather.py \
+  --latitude YOUR_LATITUDE \
+  --longitude YOUR_LONGITUDE \
+  --location-label "Your study location" \
+  --start-date 2021-01-01 \
+  --end-date 2025-12-31 \
+  --output data/external/era5_daily.csv
 ```
 
-The default coordinates are a Basti-area reference point. The returned coordinates and elevation are saved in the metadata file, because the API selects a grid cell and its returned coordinates can differ from the requested coordinates.
+The downloader writes a CSV and a matching `.metadata.json` sidecar. The metadata preserves requested and returned coordinates, elevation, date range, timezone, variables, units, model and attribution.
 
-Outputs:
-- `data/processed/basti_weather_2021_2025.csv`
-- `data/processed/basti_weather_2021_2025.metadata.json`
+## Analyze
 
-The CSV contains daily mean, maximum and minimum temperature (°C), daily mean relative humidity (%), precipitation and rain sum (mm), and maximum 10 m wind speed (km/h). The JSON records source, requested and returned coordinates, timezone, units, dates, variables, and attribution.
+```bash
+python scripts/analyze_historical_weather.py \
+  --data data/external/era5_daily.csv \
+  --output-dir outputs/historical
+```
 
-## Source and model limitations
+The analysis creates:
+- `historical_weather_summary.json`
+- `monthly_weather_summary.csv`
+- `historical_temperature_trend.png`
+- `historical_precipitation.png`
+- `monthly_precipitation.png`
 
-- Provider: Open-Meteo Historical Weather API.
-- API documentation: https://open-meteo.com/en/docs/historical-weather-api
-- Endpoint: https://archive-api.open-meteo.com/v1/archive
-- The downloader explicitly requests the ERA5 model. These are gridded, model-based historical estimates, not guaranteed observations from a weather station at the requested point.
-- Open-Meteo describes historical coverage from 1940 onward, with different models and spatial resolutions by period.
-- Daily precipitation sum is measured in millimetres when requested with `precipitation_unit=mm`.
-- Timezone is set to Asia/Kolkata for daily aggregation.
-- Open-Meteo's documentation states CC BY 4.0 for non-commercial use. Commercial use requires a suitable paid plan. Review the current provider terms before redistribution or commercial use.
-- Attribution: Weather data by Open-Meteo.com.
+## Dataset columns
 
-## Important analysis rule
+| Column | API variable | Unit |
+|---|---|---|
+| Date | time | Asia/Kolkata local calendar date |
+| Temperature_Mean_C | temperature_2m_mean | °C |
+| Temperature_Max_C | temperature_2m_max | °C |
+| Temperature_Min_C | temperature_2m_min | °C |
+| Humidity_Mean_Percent | relative_humidity_2m_mean | % |
+| Precipitation_Sum_mm | precipitation_sum | mm |
+| Wind_Speed_Max_kmh | wind_speed_10m_max | km/h |
 
-Do not combine the seven-row sample with the historical series as if they share one source or measurement method. Analyze them separately. Update the main analysis to accept the new CSV explicitly and retain the source metadata alongside the output.
+## Interpretation rules
+
+- The returned grid-cell coordinates can differ from the requested coordinates. Report both.
+- Do not describe reanalysis estimates as direct station observations.
+- Do not merge this external series with the original seven-row `weather.csv`; the source and measurement method are not documented for that sample.
+- Report missing-date coverage and units.
+- Avoid climate-trend claims from a short time period or one grid cell.
