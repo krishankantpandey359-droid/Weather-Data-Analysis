@@ -168,6 +168,7 @@ def test_blank_csv_header_is_rejected(tmp_path):
 
 def test_non_finite_temperature_is_rejected(tmp_path):
     frame = pd.read_csv(DATA)
+    frame["Temperature"] = frame["Temperature"].astype(float)
     frame.loc[0, "Temperature"] = float("inf")
     invalid = tmp_path / "infinite_temperature.csv"
     frame.to_csv(invalid, index=False)
