@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+import hashlib
 import json
 
 import matplotlib
@@ -58,6 +59,12 @@ def run_analysis(data_path=None, output_dir=None, show=False):
         "calendar_day_coverage_percent": round(
             len(df) / ((df["Date"].max() - df["Date"].min()).days + 1) * 100, 2
         ),
+        "dataset_file": csv_path.name,
+        "dataset_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+        "source_provider": None,
+        "location": None,
+        "measurement_method": None,
+        "provenance_status": "not_documented_in_repository",
     }
     with (destination / "weather_summary.json").open("w", encoding="utf-8") as summary_file:
         json.dump(summary, summary_file, indent=2, ensure_ascii=False)
