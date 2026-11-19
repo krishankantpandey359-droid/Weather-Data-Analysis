@@ -13,7 +13,7 @@ REQUIRED_COLUMNS = {"Date", "Temperature", "Humidity", "Rainfall", "Weather"}
 
 
 def run_analysis(data_path=None, output_dir=None, show=False):
-    """Load the bundled weather CSV, summarize it, and save three charts."""
+    """Load weather observations, validate them, and export charts and summary."""
     project_dir = Path(__file__).resolve().parent
     csv_path = Path(data_path) if data_path else project_dir / "weather.csv"
     destination = Path(output_dir) if output_dir else project_dir
@@ -31,7 +31,8 @@ def run_analysis(data_path=None, output_dir=None, show=False):
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
     for column in ("Temperature", "Humidity", "Rainfall"):
         df[column] = pd.to_numeric(df[column], errors="coerce")
-    if df[["Date", "Temperature", "Humidity", "Rainfall", "Weather"]].isna().any().any():
+    required = ["Date", "Temperature", "Humidity", "Rainfall", "Weather"]
+    if df[required].isna().any().any():
         raise ValueError("Weather dataset contains missing or invalid required values")
     numeric = df[["Temperature", "Humidity", "Rainfall"]].to_numpy(dtype=float)
     if not np.isfinite(numeric).all():
@@ -45,26 +46,45 @@ def run_analysis(data_path=None, output_dir=None, show=False):
     if df["Date"].dt.normalize().duplicated().any():
         raise ValueError("Weather dataset contains duplicate calendar dates")
 
-    df = df.sort_values("Date")
+    df = df.sort_values("Date").reset_index(drop=True)
     destination.mkdir(parents=True, exist_ok=True)
+    date_range = pd.date_range(df["Date"].min().normalize(), df["Date"].max().normalize(), freq="D")
+    observed_dates = pd.DatetimeIndex(df["Date"].dt.normalize().unique())
+    missing_dates = date_range.difference(observed_dates)
 
     summary = {
-        "average_temperature": round(float(df["Temperature"].mean()), 2),
-        "average_humidity": round(float(df["Humidity"].mean()), 2),
-        "total_rainfall": float(df["Rainfall"].sum()),
+        "average_temperature_c": round(float(df["Temperature"].mean()), 2),
+        "minimum_temperature_c": round(float(df["Temperature"].min()), 2),
+        "maximum_temperature_c": round(float(df["Temperature"].max()), 2),
+        "average_humidity_percent": round(float(df["Humidity"].mean()), 2),
+        "minimum_humidity_percent": round(float(df["Humidity"].min()), 2),
+        "maximum_humidity_percent": round(float(df["Humidity"].max()), 2),
+        "total_rainfall_dataset_units": round(float(df["Rainfall"].sum()), 2),
+        "average_rainfall_dataset_units": round(float(df["Rainfall"].mean()), 2),
         "records": int(len(df)),
         "date_start": df["Date"].min().date().isoformat(),
         "date_end": df["Date"].max().date().isoformat(),
-        "calendar_span_days": int((df["Date"].max() - df["Date"].min()).days + 1),
-        "calendar_day_coverage_percent": round(
-            len(df) / ((df["Date"].max() - df["Date"].min()).days + 1) * 100, 2
-        ),
+        "calendar_span_days": int(len(date_range)),
+        "observed_calendar_days": int(len(observed_dates)),
+        "missing_calendar_days": [day.date().isoformat() for day in missing_dates],
+        "calendar_day_coverage_percent": round(len(observed_dates) / len(date_range) * 100, 2),
+        "weather_category_counts": {
+            str(key): int(value) for key, value in df["Weather"].value_counts().sort_index().items()
+        },
         "dataset_file": csv_path.name,
         "dataset_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+        "temperature_unit": "degrees Celsius, as labelled in the source column",
+        "humidity_unit": "percent, validated to [0, 100]",
+        "rainfall_unit": None,
         "source_provider": None,
         "location": None,
         "measurement_method": None,
         "provenance_status": "not_documented_in_repository",
+        "interpretation_note": (
+            "Describes only the supplied observations. The rainfall unit, provider, "
+            "location and measurement method are undocumented. This is not a forecast "
+            "or a climate conclusion."
+        ),
     }
     with (destination / "weather_summary.json").open("w", encoding="utf-8") as summary_file:
         json.dump(summary, summary_file, indent=2, ensure_ascii=False)
@@ -72,9 +92,10 @@ def run_analysis(data_path=None, output_dir=None, show=False):
 
     print("WEATHER DATA SUMMARY")
     print("-" * 30)
-    print(f"Average Temperature: {summary['average_temperature']}")
-    print(f"Average Humidity: {summary['average_humidity']}")
-    print(f"Total Rainfall: {summary['total_rainfall']}")
+    print(f"Average Temperature (°C): {summary['average_temperature_c']}")
+    print(f"Average Humidity (%): {summary['average_humidity_percent']}")
+    print(f"Total Rainfall (dataset units): {summary['total_rainfall_dataset_units']}")
+    print(f"Calendar coverage: {summary['calendar_day_coverage_percent']}%")
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(df["Date"], df["Temperature"], marker="o", linewidth=2)
@@ -89,7 +110,7 @@ def run_analysis(data_path=None, output_dir=None, show=False):
 
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.bar(df["Date"], df["Rainfall"])
-    ax.set(title="Rainfall Analysis", xlabel="Date", ylabel="Rainfall")
+    ax.set(title="Daily Rainfall (source unit undocumented)", xlabel="Date", ylabel="Rainfall (dataset units)")
     ax.tick_params(axis="x", labelrotation=45)
     fig.tight_layout()
     fig.savefig(destination / "rainfall_analysis.png")
@@ -110,9 +131,9 @@ def run_analysis(data_path=None, output_dir=None, show=False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyze the bundled weather dataset.")
+    parser = argparse.ArgumentParser(description="Analyze the supplied weather dataset.")
     parser.add_argument("--data", help="Optional path to a weather CSV file.")
-    parser.add_argument("--output-dir", help="Directory for generated charts.")
+    parser.add_argument("--output-dir", help="Directory for generated charts and JSON.")
     parser.add_argument("--show", action="store_true", help="Display charts after saving.")
     args = parser.parse_args()
     run_analysis(args.data, args.output_dir, args.show)
