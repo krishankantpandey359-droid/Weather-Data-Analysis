@@ -103,7 +103,11 @@ def test_summary_reports_observed_date_coverage(tmp_path):
 
 def test_duplicate_calendar_dates_with_different_times_are_rejected(tmp_path):
     frame = pd.read_csv(DATA)
-    frame.loc[1, "Date"] = "2024-01-01 12:00:00"
+    parsed_dates = pd.to_datetime(frame["Date"])
+    frame["Date"] = parsed_dates.dt.strftime("%Y-%m-%d %H:%M:%S")
+    frame.loc[1, "Date"] = (
+        pd.Timestamp(frame.loc[0, "Date"]) + pd.Timedelta(hours=12)
+    ).strftime("%Y-%m-%d %H:%M:%S")
     invalid = tmp_path / "duplicate_calendar_dates.csv"
     frame.to_csv(invalid, index=False)
     result = subprocess.run(
