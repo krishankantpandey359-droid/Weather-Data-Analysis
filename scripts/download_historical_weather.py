@@ -36,7 +36,9 @@ def fetch_daily_weather(latitude: float, longitude: float, start_date: str, end_
         "longitude": longitude,
         "start_date": start.date().isoformat(),
         "end_date": end.date().isoformat(),
-        "daily": ",".join(DAILY_VARIABLES),
+        "daily": ",".join([v for v in DAILY_VARIABLES if v != "relative_humidity_2m_mean"]),
+        "hourly": "relative_humidity_2m",
+        "models": "era5_land",
         "timezone": "Asia/Kolkata",
         "temperature_unit": "celsius",
         "wind_speed_unit": "kmh",
@@ -56,12 +58,24 @@ def fetch_daily_weather(latitude: float, longitude: float, start_date: str, end_
         "Temperature": daily["temperature_2m_mean"],
         "Temperature_Max": daily["temperature_2m_max"],
         "Temperature_Min": daily["temperature_2m_min"],
-        "Humidity": daily["relative_humidity_2m_mean"],
         "Rainfall": daily["precipitation_sum"],
         "Rain": daily["rain_sum"],
         "Wind_Speed_Max": daily["wind_speed_10m_max"],
     })
     frame["Date"] = pd.to_datetime(frame["Date"], errors="raise")
+    hourly = payload.get("hourly", {})
+    if not hourly.get("time") or not hourly.get("relative_humidity_2m"):
+        raise ValueError("Open-Meteo response did not include hourly relative humidity")
+    humidity = pd.DataFrame({
+        "Date": pd.to_datetime(hourly["time"], errors="raise").date,
+        "Humidity": hourly["relative_humidity_2m"],
+    })
+    humidity["Humidity"] = pd.to_numeric(humidity["Humidity"], errors="coerce")
+    daily_humidity = humidity.groupby("Date", as_index=False)["Humidity"].mean()
+    daily_humidity["Date"] = pd.to_datetime(daily_humidity["Date"])
+    frame = frame.merge(daily_humidity, on="Date", how="left", validate="one_to_one")
+    if frame["Humidity"].isna().any():
+        raise ValueError("Hourly humidity did not cover every requested calendar day")
     metadata = {
         "provider": "Open-Meteo",
         "api": API_URL,
@@ -76,8 +90,9 @@ def fetch_daily_weather(latitude: float, longitude: float, start_date: str, end_
         "end_date": end.date().isoformat(),
         "daily_units": payload.get("daily_units", {}),
         "variables": DAILY_VARIABLES,
+        "model": "ERA5-Land",
         "model_note": "Open-Meteo historical reanalysis. Values are model-based estimates, not direct measurements at a personal weather station.",
-        "license": "CC BY 4.0 for non-commercial use; commercial use requires a suitable Open-Meteo plan. Verify current terms before redistribution.",
+        "data_license": "CC BY 4.0, attribution required. Public API service is free for non-commercial use; commercial API access requires a suitable plan. Verify current terms before use.",
         "attribution": "Weather data by Open-Meteo.com",
     }
     return frame, metadata
