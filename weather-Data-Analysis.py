@@ -51,6 +51,12 @@ def run_analysis(data_path=None, output_dir=None, show=False):
         "average_humidity": round(float(df["Humidity"].mean()), 2),
         "total_rainfall": float(df["Rainfall"].sum()),
         "records": int(len(df)),
+        "date_start": df["Date"].min().date().isoformat(),
+        "date_end": df["Date"].max().date().isoformat(),
+        "calendar_span_days": int((df["Date"].max() - df["Date"].min()).days + 1),
+        "calendar_day_coverage_percent": round(
+            len(df) / ((df["Date"].max() - df["Date"].min()).days + 1) * 100, 2
+        ),
     }
     print("WEATHER DATA SUMMARY")
     print("-" * 30)
