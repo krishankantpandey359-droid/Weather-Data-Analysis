@@ -117,3 +117,19 @@ def test_duplicate_calendar_dates_with_different_times_are_rejected(tmp_path):
     )
     assert result.returncode != 0
     assert "duplicate calendar dates" in result.stderr
+
+def test_analysis_exports_machine_readable_summary(tmp_path):
+    import json
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("weather_analysis", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    summary = module.run_analysis(DATA, tmp_path)
+
+    output = tmp_path / "weather_summary.json"
+    assert output.is_file()
+    saved = json.loads(output.read_text(encoding="utf-8"))
+    assert saved == summary
+    assert saved["records"] == 7
+    assert saved["calendar_day_coverage_percent"] == 100.0
