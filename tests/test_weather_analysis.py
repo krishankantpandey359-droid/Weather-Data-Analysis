@@ -138,3 +138,40 @@ def test_weather_category_blank_values_are_rejected(tmp_path):
     result = run_script(invalid, tmp_path / "out")
     assert result.returncode != 0
     assert "Weather descriptions must not be blank" in result.stderr
+
+
+def test_duplicate_csv_headers_are_rejected_before_pandas_renames_them(tmp_path):
+    invalid = tmp_path / "duplicate_headers.csv"
+    invalid.write_text(
+        "Date,Temperature,Humidity,Rainfall,Weather,Temperature\n"
+        "2024-01-01,22,60,0,Sunny,23\n",
+        encoding="utf-8",
+    )
+    result = run_script(invalid, tmp_path / "out")
+    assert result.returncode != 0
+    assert "duplicate column names" in result.stderr
+    assert "Temperature" in result.stderr
+
+
+def test_blank_csv_header_is_rejected(tmp_path):
+    invalid = tmp_path / "blank_header.csv"
+    invalid.write_text(
+        "Date,Temperature,Humidity,Rainfall,Weather,\n"
+        "2024-01-01,22,60,0,Sunny,extra\n",
+        encoding="utf-8",
+    )
+    result = run_script(invalid, tmp_path / "out")
+    assert result.returncode != 0
+    assert "blank column names" in result.stderr
+
+
+def test_header_whitespace_is_normalized_before_duplicate_check(tmp_path):
+    invalid = tmp_path / "duplicate_trimmed_headers.csv"
+    invalid.write_text(
+        "Date,Temperature, Temperature,Humidity,Rainfall,Weather\n"
+        "2024-01-01,22,23,60,0,Sunny\n",
+        encoding="utf-8",
+    )
+    result = run_script(invalid, tmp_path / "out")
+    assert result.returncode != 0
+    assert "duplicate column names" in result.stderr
