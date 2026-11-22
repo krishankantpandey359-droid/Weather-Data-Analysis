@@ -12,7 +12,7 @@ The two datasets are never silently merged. ERA5 values are gridded reanalysis e
 The committed `weather.csv` contains seven daily records from 1–7 January 2024. The existing script validates the sample and exports charts plus `weather_summary.json`.
 
 ```bash
-python -m pip install pandas matplotlib numpy pytest requests
+python -m pip install -r requirements.txt
 python weather-Data-Analysis.py
 ```
 
