@@ -92,3 +92,7 @@ GitHub Actions compiles the analysis and scripts and runs both the original samp
 - `scripts/analyze_historical_weather.py`: historical CSV validation and analysis.
 - `tests/`: automated tests for both paths.
 - `docs/`: historical data workflow and source notes.
+
+## Latest GitHub Actions validation
+
+Latest successful main-branch workflow run checked on 24 November 2026: [GitHub Actions run #45311927828](https://github.com/krishankantpandey359-droid/Weather-Data-Analysis/actions/runs/45311927828). This confirms only the checks configured in the workflow, not manual validation of every feature.
